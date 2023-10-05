@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
-# sets up your web servers for the deployment of web_static
 
+# Install Nginx if not already installed
 sudo apt-get update
-sudo apt-get -y install nginx
-sudo ufw allow 'Nginx HTTP'
-sudo mkdir -p /data/web_static/releases/test /data/web_static/shared/
-echo "<h1>This is programming</h1>" > /data/web_static/releases/test/index.html
-if [ -d "/data/web_static/current" ];
-then
-    sudo rm -rf /data/web_static/current;
-fi;
-sudo ln -sf /data/web_static/releases/test/ /data/web_static/current
-sudo chown -hR ubuntu:ubuntu /data/
-sudo sed -i '11i\\tlocation /hbnb_static {\n\t\talias /data/web_static/current/;\n\t}' /etc/nginx/sites-available/default
-echo "Successfully added"
-sudo ln -sf '/etc/nginx/sites-available/default' '/etc/nginx/sites-enabled/default'
+sudo apt-get install -y nginx
+
+# Create necessary folders if they don't exist
+sudo mkdir -p /data/web_static/releases/test
+sudo mkdir -p /data/web_static/shared
+
+# Create a fake HTML file for testing
+echo -e "<html>\n  <head>\n  </head>\n  <body>\n This is programming\n  </body>\n</html>" | sudo tee /data/web_static/releases/test/index.html
+
+# Create or update symbolic link
+sudo ln -sf /data/web_static/releases/test /data/web_static/current
+
+# Give ownership of the /data/ folder to the ubuntu user and group
+sudo chown -R ubuntu:ubuntu /data/
+
+# Update Nginx configuration to serve the content of /data/web_static/current/
+# under the alias /hbnb_static
+sudo sed -i '/listen 80 default_server;/a \\n\tlocation /hbnb_static {\n\t\talias /data/web_static/current/;\n\t}\n' /etc/nginx/sites-available/default
+
+# Restart Nginx to apply the changes
 sudo service nginx restart
